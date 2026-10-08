@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import argparse
+from pathlib import Path
 import pandas as pd
 import mlflow
 import mlflow.sklearn
@@ -36,7 +37,7 @@ def main(args):
     # === MLflow Setup - ESSENTIAL for experiment tracking ===
     # Configure MLflow to use local file-based tracking (not a tracking server)
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    mlruns_path = args.mlflow_uri or f"file://{project_root}/mlruns"  # Local file-based tracking
+    mlruns_path = args.mlflow_uri or Path(project_root, "mlruns").resolve().as_uri()
     mlflow.set_tracking_uri(mlruns_path)
     mlflow.set_experiment(args.experiment)  # Creates experiment if doesn't exist
 
@@ -55,7 +56,7 @@ def main(args):
 
         # === CRITICAL: Data Quality Validation ===
         # This step is ESSENTIAL for production ML - validates data quality before training
-        print("🔍 Validating data quality with Great Expectations...")
+        print("🔍 Validating data quality...")
         is_valid, failed = validate_telco_data(df)
         mlflow.log_metric("data_quality_pass", int(is_valid))  # Track data quality over time
 
@@ -183,10 +184,10 @@ def main(args):
 
         # === CRITICAL: Log Evaluation Metrics to MLflow ===
         # These metrics are essential for model comparison and monitoring
-        precision = precision_score(y_test, y_pred)    # Of predicted churners, how many actually churned?
-        recall = recall_score(y_test, y_pred)          # Of actual churners, how many did we catch?
-        f1 = f1_score(y_test, y_pred)                  # Harmonic mean of precision and recall
-        roc_auc = roc_auc_score(y_test, proba)         # Area under ROC curve (threshold-independent)
+        precision = float(precision_score(y_test, y_pred))
+        recall = float(recall_score(y_test, y_pred))
+        f1 = float(f1_score(y_test, y_pred))
+        roc_auc = float(roc_auc_score(y_test, proba))
         
         # Log all metrics for experiment tracking
         mlflow.log_metric("precision", precision)
@@ -230,12 +231,3 @@ if __name__ == "__main__":
 
     args = p.parse_args()
     main(args)
-
-"""
-# Use this below to run the pipeline:
-
-python scripts/run_pipeline.py \                                            
-    --input data/raw/Telco-Customer-Churn.csv \
-    --target Churn
-
-"""

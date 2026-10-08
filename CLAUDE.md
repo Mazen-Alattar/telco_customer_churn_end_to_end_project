@@ -47,7 +47,7 @@ docker run -p 8501:8501 telco-churn-app
 This project implements a complete MLOps pipeline with two distinct phases:
 
 **Training Pipeline** (`scripts/run_pipeline.py`):
-1. **Data Loading** → **Data Validation** (Great Expectations) → **Preprocessing** → **Feature Engineering** → **XGBoost Training** → **MLflow Logging**
+1. **Data Loading** → **Data Validation** → **Preprocessing** → **Feature Engineering** → **XGBoost Training** → **MLflow Logging**
 2. All artifacts (model, feature columns, preprocessing logic) are stored in MLflow for reproducibility
 
 **Serving Pipeline** (`src/app/streamlit_app.py` + `src/serving/inference.py`):
@@ -80,7 +80,7 @@ Critical pattern: Training and serving must use identical feature transformation
 - **Prediction Format**: Returns "Likely to churn" or "Not likely to churn" strings
 
 ### Data Validation
-- **Tool**: Great Expectations with custom validation suite
+- **Tool**: pandas-based validation checks
 - **Location**: `src/utils/validate_data.py`
 - **Checks**: CustomerID presence, gender values, numeric ranges for tenure/charges
 - **Integration**: Results logged to MLflow as `data_quality_pass` metric

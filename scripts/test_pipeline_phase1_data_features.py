@@ -6,7 +6,7 @@ import pandas as pd
 import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.append(str(PROJECT_ROOT))
+sys.path.append(str(PROJECT_ROOT / "src"))
 
 from data.load_data import load_data
 from data.preprocess import preprocess_data

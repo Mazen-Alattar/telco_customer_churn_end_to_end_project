@@ -1,0 +1,15 @@
+artifact_uri: file:///D:/elbadry/4-projects/Telco_Customer_Churn/mlruns/354834176513075688/d798a256ed974d67b3e1f85f2ef29da8/artifacts
+end_time: 1791451733301
+entry_point_name: ''
+experiment_id: '354834176513075688'
+lifecycle_stage: active
+run_id: d798a256ed974d67b3e1f85f2ef29da8
+run_name: receptive-wolf-246
+run_uuid: d798a256ed974d67b3e1f85f2ef29da8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1791451723153
+status: 3
+tags: []
+user_id: mazen

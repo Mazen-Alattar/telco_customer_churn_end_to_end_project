@@ -19,8 +19,8 @@ COPY . .
 COPY src/serving/model /app/src/serving/model
 
 # Copy the selected MLflow model and feature schema to the runtime path.
-COPY src/serving/model/3b1a41221fc44548aed629fa42b762e0/artifacts/model /app/model
-COPY src/serving/model/3b1a41221fc44548aed629fa42b762e0/artifacts/feature_columns.txt /app/model/feature_columns.txt
+COPY src/serving/model/d798a256ed974d67b3e1f85f2ef29da8/artifacts/model /app/model
+COPY src/serving/model/d798a256ed974d67b3e1f85f2ef29da8/artifacts/feature_columns.txt /app/model/feature_columns.txt
 
 # Make the source package importable and show logs immediately.
 ENV PYTHONUNBUFFERED=1 \

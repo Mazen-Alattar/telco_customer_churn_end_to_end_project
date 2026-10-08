@@ -26,11 +26,14 @@ Production Deployment:
 
 import os
 from pathlib import Path
+from typing import Any
+
 import pandas as pd
-import mlflow
+import mlflow.sklearn
 
 MODEL_CANDIDATES = [
     Path(os.getenv("MODEL_DIR", "/app/model")),
+    Path(__file__).resolve().parent / "model" / "d798a256ed974d67b3e1f85f2ef29da8" / "artifacts" / "model",
     Path(__file__).resolve().parent / "model" / "3b1a41221fc44548aed629fa42b762e0" / "artifacts" / "model",
     Path(__file__).resolve().parent / "model" / "2ac205f95a264d49b964ab362fe5f4e6" / "artifacts" / "model",
 ]
@@ -40,14 +43,17 @@ if MODEL_DIR is None:
     searched_paths = ", ".join(str(path) for path in MODEL_CANDIDATES)
     raise FileNotFoundError(f"No MLflow model found. Searched: {searched_paths}")
 
-model = mlflow.pyfunc.load_model(str(MODEL_DIR))
+model: Any = mlflow.sklearn.load_model(str(MODEL_DIR))
 print(f"Model loaded successfully from {MODEL_DIR}")
 
 # === FEATURE SCHEMA LOADING ===
 # CRITICAL: Load the exact feature column order used during training
 # This ensures the model receives features in the expected order
 try:
-    feature_file = MODEL_DIR / "feature_columns.txt"
+    feature_file = next(
+        path for path in (MODEL_DIR / "feature_columns.txt", MODEL_DIR.parent / "feature_columns.txt")
+        if path.exists()
+    )
     with open(feature_file) as f:
         FEATURE_COLS = [ln.strip() for ln in f if ln.strip()]
     print(f"✅ Loaded {len(FEATURE_COLS)} feature columns from training")
@@ -69,6 +75,7 @@ BINARY_MAP = {
 
 # Numeric columns that need type coercion
 NUMERIC_COLS = ["tenure", "MonthlyCharges", "TotalCharges"]
+PREDICTION_THRESHOLD = float(os.getenv("PREDICTION_THRESHOLD", "0.35"))
 
 def _serve_transform(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -114,7 +121,7 @@ def _serve_transform(df: pd.DataFrame) -> pd.DataFrame:
         if c in df.columns:
             df[c] = (
                 df[c]
-                .astype(str)                    # Convert to string
+                .astype("string")               # Convert to string
                 .str.strip()                    # Remove whitespace
                 .map(mapping)                   # Apply binary mapping
                 .astype("Int64")                # Handle NaN values
@@ -187,17 +194,8 @@ def predict(input_dict: dict) -> str:
     # Call the loaded MLflow model for inference
     # The model returns predictions in various formats depending on the ML library
     try:
-        preds = model.predict(df_enc)
-        
-        # Normalize prediction output to consistent format
-        if hasattr(preds, "tolist"):
-            preds = preds.tolist()  # Convert numpy array to list
-            
-        # Extract single prediction value (for single-row input)
-        if isinstance(preds, (list, tuple)) and len(preds) == 1:
-            result = preds[0]
-        else:
-            result = preds
+        probability = model.predict_proba(df_enc)[:, 1]
+        result = int(probability[0] >= PREDICTION_THRESHOLD)
             
     except Exception as e:
         raise Exception(f"Model prediction failed: {e}")
